@@ -4,37 +4,51 @@ module.exports = function(app) {
     let todoList = require('../controllers/todoListController');
     let userHandles = require('../controllers/userController');
     let captcha = require('../controllers/captchaController');
+    let typeDrive = require('../controllers/typeDriveController');
+    let referral = require('../controllers/referralController');
+    let codeVerify = require('../controllers/codeController');
 
     // todoList Routes
-    app.route('/tasks')
+    app.route('/api/tasks')
         .get(todoList.list_all_tasks)
         .post(todoList.create_a_task);
 
-    app.route('/captcha')
+    app.route('/api/captcha')
         .post(captcha.recaptcha_verify);
 
-    app.route('/tasks/:taskId')
+    app.route('/api/verify_code')
+        .get(codeVerify.list_all_verify);
+
+    app.route('/api/type_drive')
+        .get(typeDrive.list_all_type_drive)
+        .post(typeDrive.create_a_type_drive);
+
+    app.route('/api/referral')
+        .get(referral.list_all_referral)
+        .post(referral.create_a_referral);
+
+    app.route('/api/tasks/:taskId')
         .get(userHandles.loginRequired,todoList.read_a_task)
         .put(userHandles.loginRequired,todoList.update_a_task)
         .delete(userHandles.loginRequired,todoList.delete_a_task);
 
-    app.route('/auth/register')
+    app.route('/api/auth/register')
         .post(userHandles.register);
 
-    app.route('/auth/verify')
+    app.route('/api/auth/verify')
         .post(userHandles.verify);
 
-    app.route('/auth/avatar')
+    app.route('/api/auth/avatar')
         .post(userHandles.loginRequired,userHandles.update_avatar);
 
-    app.route('/auth/password/:id')
+    app.route('/api/auth/password/:id')
         .put(userHandles.loginRequired,userHandles.update_password);
 
 
-    app.route('/auth/:email')
+    app.route('/api/auth/:email')
         .put(userHandles.update_active);
 
-    app.route('/auth/profile/:id')
+    app.route('/api/auth/profile/:id')
         .put(userHandles.loginRequired,userHandles.update_profile)
         .get(userHandles.loginRequired,userHandles.profile);
 };

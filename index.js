@@ -6,6 +6,10 @@ var express = require('express'),
     mongoose = require('mongoose'),
     Task = require('./models/todoListModel'),
     User = require('./models/userModel'),
+    TypeDrive = require('./models/typeDriveModel'),
+    UserDoc = require('./models/userDocModel'),
+    Referral = require('./models/referralModel'),
+    Code = require('./models/codeModel'),
     bodyParser = require('body-parser'),
     path = require('path'),
     jsonwebtoken = require("jsonwebtoken");
@@ -16,7 +20,6 @@ mongoose.Promise = global.Promise;
 mongoose.connect(config.database);
 
 app.use(express.static('public'));
-app.use(express.static(path.resolve(__dirname, './build')));
 
 
 //app.use(bodyParser.json());
@@ -40,9 +43,14 @@ app.use(function(req, res, next) {
 var routes = require('./routes/todoListRoutes');
 routes(app);
 
-app.get('/', function (req, res) {
-    res.sendFile(path.resolve(__dirname, './build/index.html'));
-    res.end();
+app.use(express.static(path.join(__dirname, 'build')));
+
+// app.get('/', function (req, res) {
+// //     res.sendFile(path.join(__dirname, 'build', 'index.html'));
+// // });
+
+app.get('/*', function (req, res) {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
 app.use(function(req, res) {

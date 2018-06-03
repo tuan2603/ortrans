@@ -15,6 +15,10 @@ const CodeSchema = new Schema({
         required: true,
         lowercase: true,
     },
+    phone:{
+        type:String,
+        lowercase: true,
+    },
     create_at:{
         type: Date,
         default:Date.now

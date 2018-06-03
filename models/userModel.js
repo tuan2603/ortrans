@@ -8,22 +8,18 @@ const UserSchema = new Schema({
         trim:true,
     },
     countryCode: {
-        type: String,
+        type: Number,
         required: true,
     },
     phone:{
-        type:String,
+        type:Number,
         unique:true,
         required: true,
-        trim:true,
-        lowercase: true,
     },
     email:{
         type:String,
-        trim:true,
-        unique:true,
-        required: true,
         lowercase: true,
+        default:''
     },
     password:{
         type:String
@@ -54,6 +50,10 @@ const UserSchema = new Schema({
         type:Number
     },
     create_at:{
+        type: Date,
+        default:Date.now
+    },
+    updated_at:{
         type: Date,
         default:Date.now
     }

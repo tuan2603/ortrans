@@ -3,8 +3,9 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const saltRounds = 10;
 const jwt = require('jsonwebtoken');
-const User = require('../models/userModel');
-const Code = require('../models/codeModel');
+const User = mongoose.model('User');
+const Code = mongoose.model('VerifyCode');
+const UserDoc = mongoose.model('UserDocs');
 const config = require("../config");
 const passwordValidator = require('password-validator');
 const path = require('path');
@@ -13,6 +14,8 @@ const fs = require('fs');
 // Create a schema
 var checkPass = new passwordValidator();
 var nodemailer = require('nodemailer');
+var rp = require('request-promise');
+
 
 // Add properties to it
 checkPass
@@ -93,7 +96,22 @@ let findUser = (phone) => {
     });
 }
 
+let findUserBody = (body) => {
+    return new Promise((resolve, reject) => {
+        User.findOne({phone: body.phone, roleType:body.roleType}, function (err, user) {
+            if (err) reject(err);
+            resolve(user);
+        });
+    });
+}
+
 let SaveCoseVerify = (newCode) => {
+    newCode.save(function (err, user) {
+        if (err) console.log(err);
+    });
+}
+
+let SaveUserDoc = (newCode) => {
     newCode.save(function (err, user) {
         if (err) console.log(err);
     });
@@ -102,10 +120,12 @@ let SaveCoseVerify = (newCode) => {
 let Register = (newUser, res) => {
     newUser.save(function (err, user) {
         if (err) {
+            console.log(Messages, err);
             return res.status(400).send({
                 message: Messages,
                 value: 3
             });
+
         } else {
             if (user) {
                 return SingIN(user, res);
@@ -124,15 +144,17 @@ let SingIN = (user, res) => {
     let Verification = rn(options);
     let newCode = new Code({
         accountId: user._id,
+        phone: user.phone,
         code: Verification,
     });
-    if (user.verifyType == 0) {
+    if (user.verifyType === 0) {
         // veify code mail
         if (Send_mail(user.email, Verification)) {
             SaveCoseVerify(newCode);
             return res.json({
                 value: 6,
-                message: Messages
+                message: Messages,
+                code:Verification
             });
         } else {
             return res.json({
@@ -140,24 +162,57 @@ let SingIN = (user, res) => {
                 "message": Messages
             });
         }
-    } else if (user.verifyType == 1) {
+    } else if (user.verifyType === 1) {
         //verify code sen message
         SaveCoseVerify(newCode);
-        SendMessage(user.countryCode + user.phone, Verification)
-            .then(
-                responseData => {
-                    //console.log(responseData);
-                    return res.json({
-                        value: 7,
-                        message: Messages
-                    });
-                },
-                err => {
-                    return res.json({
-                        value: 1,
-                        "message": Messages
-                    });
-                })
+
+        var option = {
+            uri: 'http://rest.esms.vn/MainService.svc/json/SendMultipleMessage_V4_get',
+            qs: {// -> uri + '?access_token=xxxxx%20xxxxx'
+                Phone: "0" + user.phone + "",
+                Content: Verification,
+                ApiKey: 'FE1612D2F42AE5FA207D92A8C41273',
+                SecretKey: '4E8A4B9C4C578DBB803120B4F78BD5',
+                SmsType: 6,
+            },
+            headers: {
+                'User-Agent': 'Request-Promise'
+            },
+            json: true // Automatically parses the JSON string in the response
+        };
+
+        rp(option)
+            .then(function (repos) {
+                console.log(repos);
+                return res.json({
+                    value: 7,
+                    message: Messages,
+                    code:Verification
+                });
+            })
+            .catch(function (err) {
+                return res.json({
+                    value: 1,
+                    "message": Messages
+                });
+            });
+
+        // SendMessage("+"+user.countryCode + user.phone, Verification)
+        //     .then(
+        //         responseData => {
+        //             console.log(responseData);
+        //             return res.json({
+        //                 value: 7,
+        //                 message: Messages
+        //             });
+        //         },
+        //         err => {
+        //             return res.json({
+        //                 value: 1,
+        //                 "message": Messages
+        //             });
+        //         })
+
     } else {
         return res.json({
             value: 8,
@@ -178,18 +233,25 @@ let Messages = {
 };
 
 exports.register = function (req, res) {
+    //lưu thông tin người dùng bảng chính
     let newUser = new User(req.body);
-    findUser(newUser.phone)
+
+    findUserBody(req.body)
         .then(
             user => {
                 if (user) {
-                    if (user.activeType == 0) {
+                    if (user.activeType === 0) {
                         return res.json({
                             value: 5,
                             "message": Messages
                         });
                     } else {
                         SingIN(user, res);
+                        //lưu thông tin người dùng bảng document
+                        if ( user.roleType === 2  ) {
+                           let newUserDoc = new UserDoc(req.body);
+                            SaveUserDoc(newUserDoc);
+                        }
                     }
                 } else {
                     return Register(newUser, res);
@@ -214,17 +276,24 @@ let mesVerify = {
 
 let findCode = (id) => {
     return new Promise((resolve, reject) => {
-        Code.findOne({accountId: id}, function (err, code) {
+        Code.find({
+            accountId: id
+        }, function (err, code) {
+            console.log(code);
             if (err) reject(err);
-            resolve(code);
-        });
+            resolve(code[0]);
+        })
+            .sort({
+                create_at: -1
+            })
+            .limit(1)
     });
 }
 
 exports.verify = function (req, res) {
-    if (req.body.verify) {
-        if (req.body.verify === 2) {
-            findUser(req.body.phone)
+    if (req.body.verifyType) {
+        if (req.body.verifyType === 2) {
+            findUserBody(req.body)
                 .then(user => {
                         if (!user) {
                             res.status(401).json({
@@ -264,7 +333,7 @@ exports.verify = function (req, res) {
                         })
                     });
         } else {
-            findUser(req.body.phone)
+            findUserBody(req.body)
                 .then(user => {
                         if (!user) {
                             res.status(401).json({
@@ -296,7 +365,7 @@ exports.verify = function (req, res) {
                                                         create_at: user.create_at,
                                                         email: user.email,
                                                         _id: user._id
-                                                    },config.secret),
+                                                    }, config.secret),
                                                     value: 0
                                                 });
                                             } else {
@@ -438,7 +507,10 @@ exports.update_profile = function (req, res) {
 exports.update_password = function (req, res) {
     if (checkPass.validate(req.body.password)) {
         let password = bcrypt.hashSync(req.body.password, saltRounds);
-        User.findOneAndUpdate({_id: req.params.id},{ password:password, verifyType:2}, {new: true}, function (err, User) {
+        User.findOneAndUpdate({_id: req.params.id}, {
+            password: password,
+            verifyType: 2
+        }, {new: true}, function (err, User) {
             if (err)
                 return res.status(400).send({
                     response: 'Update fail',
@@ -461,7 +533,7 @@ exports.update_password = function (req, res) {
             'Must have digits, ' +
             'Must have symbols, ' +
             'Should not have spaces',
-            value:false
+            value: false
 
         });
     }
@@ -472,7 +544,7 @@ let uploadDir = 'public/uploads';
 var Storage = multer.diskStorage({
     destination: uploadDir,
     filename: function (req, file, cb) {
-        cb(null, file.fieldname + '-' + Date.now() +".jpg");
+        cb(null, file.fieldname + '-' + Date.now() + ".jpg");
     }
 
 });
@@ -495,11 +567,11 @@ var upload = multer({
 }).single('avatar'); //Field name and max count
 
 let deleteAvatar = (id) => {
-    User.findOne({_id:id}, function (err, user) {
+    User.findOne({_id: id}, function (err, user) {
         if (err) console.log(err);
         if (user) {
             try {
-                fs.unlinkSync(uploadDir +"/"+ user.avatarLink);
+                fs.unlinkSync(uploadDir + "/" + user.avatarLink);
             } catch (err) {
                 console.log(err);
             }
@@ -507,8 +579,8 @@ let deleteAvatar = (id) => {
     })
 }
 
-let updateAvatarUser = (id,filename,res) => {
-    User.findOneAndUpdate({_id:id},{ avatarLink:filename}, {new: true}, function (err, User) {
+let updateAvatarUser = (id, filename, res) => {
+    User.findOneAndUpdate({_id: id}, {avatarLink: filename}, {new: true}, function (err, User) {
         if (err)
             return res.status(400).send({
                 response: err,
@@ -524,9 +596,9 @@ let updateAvatarUser = (id,filename,res) => {
     });
 }
 
-let DelAndUpdateAvatar = async (id,filename,res) => {
-     await deleteAvatar(id);
-   updateAvatarUser(id,filename,res);
+let DelAndUpdateAvatar = async (id, filename, res) => {
+    await deleteAvatar(id);
+    updateAvatarUser(id, filename, res);
 }
 
 
@@ -540,11 +612,11 @@ exports.update_avatar = function (req, res) {
         } else {
             //console.log(req.file);
             if (req.file) {
-                if (req.body.id){
-                    return DelAndUpdateAvatar(req.body.id,req.file.filename,res);
-                } else{
+                if (req.body.id) {
+                    return DelAndUpdateAvatar(req.body.id, req.file.filename, res);
+                } else {
                     try {
-                        fs.unlinkSync(uploadDir +"/"+ req.file.filename);
+                        fs.unlinkSync(uploadDir + "/" + req.file.filename);
                     } catch (err) {
                         console.log(err);
                     }
@@ -553,7 +625,7 @@ exports.update_avatar = function (req, res) {
                         "value": false
                     });
                 }
-            }else{
+            } else {
                 res.json({
                     "response": req.file,
                     "value": false
