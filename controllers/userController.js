@@ -321,7 +321,8 @@ exports.verify = function (req, res) {
                                             _id: user._id
                                         },
                                         config.secret),
-                                    value: 0
+                                    value: 0,
+                                    id: user._id,
                                 });
                             }
                         }
@@ -366,7 +367,8 @@ exports.verify = function (req, res) {
                                                         email: user.email,
                                                         _id: user._id
                                                     }, config.secret),
-                                                    value: 0
+                                                    value: 0,
+                                                    id: user._id,
                                                 });
                                             } else {
                                                 res.status(401).json({
