@@ -87,18 +87,19 @@ let comparePassword = function (password, user) {
     return bcrypt.compareSync(password, user.password);
 }
 
-let findUser = (phone) => {
+
+let findUserBody = (body) => {
     return new Promise((resolve, reject) => {
-        User.findOne({phone: phone}, function (err, user) {
+        User.findOne({phone: body.phone, roleType: body.roleType}, function (err, user) {
             if (err) reject(err);
             resolve(user);
         });
     });
 }
 
-let findUserBody = (body) => {
+let findUserPhone = (phone) => {
     return new Promise((resolve, reject) => {
-        User.findOne({phone: body.phone, roleType:body.roleType}, function (err, user) {
+        User.findOne({phone: phone}, function (err, user) {
             if (err) reject(err);
             resolve(user);
         });
@@ -128,6 +129,39 @@ let Register = (newUser, res) => {
 
         } else {
             if (user) {
+                let userDoc = new UserDoc(req.body);
+                userDoc.accountId = user._id;
+                if (user.roleType === 2) {
+                    SaveUserDoc(userDoc);
+                }
+                return SingIN(user, res);
+            }
+            else {
+                return res.status(400).send({
+                    message: Messages,
+                    value: 2
+                });
+            }
+        }
+    });
+}
+
+let RegisterWeb  = (newUser, res, req) => {
+    newUser.save(function (err, user) {
+        if (err) {
+            console.log(Messages, err);
+            return res.status(400).send({
+                message: Messages,
+                value: 3
+            });
+
+        } else {
+            if (user) {
+                let userDoc = new UserDoc(req.body);
+                userDoc.accountId = user._id;
+                if (user.roleType === 2) {
+                    SaveUserDoc(userDoc);
+                }
                 return SingIN(user, res);
             }
             else {
@@ -154,7 +188,7 @@ let SingIN = (user, res) => {
             return res.json({
                 value: 6,
                 message: Messages,
-                code:Verification
+                code: Verification
             });
         } else {
             return res.json({
@@ -187,7 +221,7 @@ let SingIN = (user, res) => {
                 return res.json({
                     value: 7,
                     message: Messages,
-                    code:Verification
+                    code: Verification
                 });
             })
             .catch(function (err) {
@@ -235,34 +269,53 @@ let Messages = {
 exports.register = function (req, res) {
     //lưu thông tin người dùng bảng chính
     let newUser = new User(req.body);
-
-    findUserBody(req.body)
-        .then(
-            user => {
-                if (user) {
-                    if (user.activeType === 0) {
+    if (req.body.roleType === 2) {
+        findUserPhone(req.body.phone)
+            .then(
+                user => {
+                    if (user) {
                         return res.json({
                             value: 5,
                             "message": Messages
                         });
+
                     } else {
-                        SingIN(user, res);
-                        //lưu thông tin người dùng bảng document
-                        if ( user.roleType === 2  ) {
-                           let newUserDoc = new UserDoc(req.body);
-                            SaveUserDoc(newUserDoc);
-                        }
+                        return RegisterWeb(newUser, res, req);
                     }
-                } else {
-                    return Register(newUser, res);
-                }
-            },
-            err => {
-                return res.status(400).send({
-                    message: Messages,
-                    value: 4
+                },
+                err => {
+                    return res.status(400).send({
+                        message: Messages,
+                        value: 4
+                    });
                 });
-            });
+    } else {
+        findUserBody(req.body)
+            .then(
+                user => {
+                    if (user) {
+
+                        if (user.activeType === 0) {
+                            return res.json({
+                                value: 5,
+                                "message": Messages
+                            });
+                        } else {
+                            SingIN(user, res);
+                        }
+
+                    } else {
+                        return Register(newUser, res);
+                    }
+                },
+                err => {
+                    return res.status(400).send({
+                        message: Messages,
+                        value: 4
+                    });
+                });
+    }
+
 }
 
 let mesVerify = {

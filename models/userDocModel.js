@@ -3,6 +3,12 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 const UserDocSchema = new Schema({
+    accountId:{
+        type:String,
+        required: true,
+        trim:true,
+        lowercase: true,
+    },
     typeDrive:{
         type:Number
     },
