@@ -35,6 +35,9 @@ module.exports = function(app) {
     app.route('/api/auth/register')
         .post(userHandles.register);
 
+    app.route('/api/auth/sendsms')
+        .post(userHandles.send_code_again);
+
     app.route('/api/auth/verify')
         .post(userHandles.verify);
 

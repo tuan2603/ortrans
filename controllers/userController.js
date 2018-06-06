@@ -83,10 +83,36 @@ let SendMessage = (toNumber, CONTENT) => {
     });
 }
 
+let SendMessageVN = (toNumber, CONTENT) => {
+    return new Promise( (resolve, reject) => {
+        var option = {
+            uri: 'http://rest.esms.vn/MainService.svc/json/SendMultipleMessage_V4_get',
+            qs: {// -> uri + '?access_token=xxxxx%20xxxxx'
+                Phone: "0" + toNumber + "",
+                Content: CONTENT,
+                ApiKey: 'FE1612D2F42AE5FA207D92A8C41273',
+                SecretKey: '4E8A4B9C4C578DBB803120B4F78BD5',
+                SmsType: 6,
+            },
+            headers: {
+                'User-Agent': 'Request-Promise'
+            },
+            json: true // Automatically parses the JSON string in the response
+        };
+
+        rp(option)
+            .then(function (repos) {
+               resolve(repos);
+            })
+            .catch(function (err) {
+               reject(err);
+            });
+    });
+}
+
 let comparePassword = function (password, user) {
     return bcrypt.compareSync(password, user.password);
 }
-
 
 let findUserBody = (body) => {
     return new Promise((resolve, reject) => {
@@ -126,7 +152,6 @@ let Register = (newUser, res) => {
                 message: Messages,
                 value: 3
             });
-
         } else {
             if (user) {
                 let userDoc = new UserDoc(req.body);
@@ -199,25 +224,8 @@ let SingIN = (user, res) => {
     } else if (user.verifyType === 1) {
         //verify code sen message
         SaveCoseVerify(newCode);
-
-        var option = {
-            uri: 'http://rest.esms.vn/MainService.svc/json/SendMultipleMessage_V4_get',
-            qs: {// -> uri + '?access_token=xxxxx%20xxxxx'
-                Phone: "0" + user.phone + "",
-                Content: Verification,
-                ApiKey: 'FE1612D2F42AE5FA207D92A8C41273',
-                SecretKey: '4E8A4B9C4C578DBB803120B4F78BD5',
-                SmsType: 6,
-            },
-            headers: {
-                'User-Agent': 'Request-Promise'
-            },
-            json: true // Automatically parses the JSON string in the response
-        };
-
-        rp(option)
-            .then(function (repos) {
-                console.log(repos);
+        SendMessageVN(user.phoneb,Verification)
+            .then((repos) => {
                 return res.json({
                     value: 7,
                     message: Messages,
@@ -315,6 +323,29 @@ exports.register = function (req, res) {
                     });
                 });
     }
+
+}
+// gui lai code
+exports.send_code_again = function (req, res) {
+    //lưu thông tin người dùng bảng chính
+        findUserPhone(req.body.phone)
+            .then(
+                user => {
+                    if (user) {
+                       return SingIN(user, res);
+                    } else {
+                        return res.status(400).send({
+                            message: Messages,
+                            value: 4
+                        });
+                    }
+                },
+                err => {
+                    return res.status(400).send({
+                        message: Messages,
+                        value: 4
+                    });
+                });
 
 }
 
