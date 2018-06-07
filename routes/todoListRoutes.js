@@ -41,6 +41,9 @@ module.exports = function(app) {
     app.route('/api/auth/verify')
         .post(userHandles.verify);
 
+    app.route('/api/auth/verifyweb')
+        .post(userHandles.verify_web);
+
     app.route('/api/auth/avatar')
         .post(userHandles.loginRequired,userHandles.update_avatar);
 

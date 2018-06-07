@@ -439,7 +439,7 @@ exports.verify = function (req, res) {
                                                         })
                                                 }
                                                 Code.deleteMany({
-                                                    accountId: user._id
+                                                    phone: user.phone
                                                 }, function (err, re) {
                                                     if (err) console.log(err);
                                                 })
@@ -496,7 +496,7 @@ exports.verify = function (req, res) {
 
 // verify cho code
 exports.verify_web = function (req, res) {
-    findUserBody(req.body)
+    findUserPhone(req.body.phone)
         .then(user => {
                 if (!user) {
                     res.status(401).json({
@@ -509,29 +509,44 @@ exports.verify_web = function (req, res) {
                             codes => {
                                 if (codes) {
                                     if (codes.code === req.body.code) {
+                                        Code.deleteMany({
+                                            phone: user.phone
+                                        }, function (err, re) {
+                                            if (err) console.log(err);
+                                        });
+
                                         if (user.activeType === 0) {
                                             User.findOneAndUpdate(
                                                 {_id: user._id},
-                                                {activeType: 1}, {new: true}, function (err, useOne) {
-                                                    console.log(err);
+                                                {activeType: 2}, {new: true}, function (err, useOne) {
+                                                    useOne.password = undefined;
+                                                    return res.status(200).json({
+                                                        message: jwt.sign({
+                                                            phone: useOne.phone,
+                                                            create_at: useOne.create_at,
+                                                            email: useOne.email,
+                                                            _id: useOne._id
+                                                        }, config.secret),
+                                                        value: 0,
+                                                        id: useOne._id,
+                                                        activeType:useOne.activeType,
+                                                    });
                                                 })
+                                        }else{
+                                            user.password = undefined;
+                                            return res.status(200).json({
+                                                message: jwt.sign({
+                                                    phone: user.phone,
+                                                    create_at: user.create_at,
+                                                    email: user.email,
+                                                    _id: user._id
+                                                }, config.secret),
+                                                value: 0,
+                                                id: user._id,
+                                                activeType:user.activeType,
+                                            });
                                         }
-                                        Code.deleteMany({
-                                            accountId: user._id
-                                        }, function (err, re) {
-                                            if (err) console.log(err);
-                                        })
-                                        user.password = undefined;
-                                        return res.json({
-                                            message: jwt.sign({
-                                                phone: user.phone,
-                                                create_at: user.create_at,
-                                                email: user.email,
-                                                _id: user._id
-                                            }, config.secret),
-                                            value: 0,
-                                            id: user._id,
-                                        });
+
                                     } else {
                                         res.status(401).json({
                                             value: 2,
