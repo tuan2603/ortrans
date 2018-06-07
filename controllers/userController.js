@@ -84,7 +84,7 @@ let SendMessage = (toNumber, CONTENT) => {
 }
 
 let SendMessageVN = (toNumber, CONTENT) => {
-    return new Promise( (resolve, reject) => {
+    return new Promise((resolve, reject) => {
         var option = {
             uri: 'http://rest.esms.vn/MainService.svc/json/SendMultipleMessage_V4_get',
             qs: {// -> uri + '?access_token=xxxxx%20xxxxx'
@@ -102,10 +102,10 @@ let SendMessageVN = (toNumber, CONTENT) => {
 
         rp(option)
             .then(function (repos) {
-               resolve(repos);
+                resolve(repos);
             })
             .catch(function (err) {
-               reject(err);
+                reject(err);
             });
     });
 }
@@ -171,7 +171,7 @@ let Register = (newUser, res) => {
     });
 }
 
-let RegisterWeb  = (newUser, res, req) => {
+let RegisterWeb = (newUser, res, req) => {
     newUser.save(function (err, user) {
         if (err) {
             console.log(Messages, err);
@@ -224,7 +224,7 @@ let SingIN = (user, res) => {
     } else if (user.verifyType === 1) {
         //verify code sen message
         SaveCoseVerify(newCode);
-        SendMessageVN(user.phoneb,Verification)
+        SendMessageVN(user.phoneb, Verification)
             .then((repos) => {
                 return res.json({
                     value: 7,
@@ -328,24 +328,24 @@ exports.register = function (req, res) {
 // gui lai code
 exports.send_code_again = function (req, res) {
     //lưu thông tin người dùng bảng chính
-        findUserPhone(req.body.phone)
-            .then(
-                user => {
-                    if (user) {
-                       return SingIN(user, res);
-                    } else {
-                        return res.status(400).send({
-                            message: Messages,
-                            value: 4
-                        });
-                    }
-                },
-                err => {
+    findUserPhone(req.body.phone)
+        .then(
+            user => {
+                if (user) {
+                    return SingIN(user, res);
+                } else {
                     return res.status(400).send({
                         message: Messages,
                         value: 4
                     });
+                }
+            },
+            err => {
+                return res.status(400).send({
+                    message: Messages,
+                    value: 4
                 });
+            });
 
 }
 
@@ -491,6 +491,76 @@ exports.verify = function (req, res) {
             message: mesVerify
         })
     }
+
+}
+
+// verify cho code
+exports.verify_web = function (req, res) {
+    findUserBody(req.body)
+        .then(user => {
+                if (!user) {
+                    res.status(401).json({
+                        value: 1,
+                        message: mesVerify
+                    })
+                } else {
+                    findCode(user._id)
+                        .then(
+                            codes => {
+                                if (codes) {
+                                    if (codes.code === req.body.code) {
+                                        if (user.activeType === 0) {
+                                            User.findOneAndUpdate(
+                                                {_id: user._id},
+                                                {activeType: 1}, {new: true}, function (err, useOne) {
+                                                    console.log(err);
+                                                })
+                                        }
+                                        Code.deleteMany({
+                                            accountId: user._id
+                                        }, function (err, re) {
+                                            if (err) console.log(err);
+                                        })
+                                        user.password = undefined;
+                                        return res.json({
+                                            message: jwt.sign({
+                                                phone: user.phone,
+                                                create_at: user.create_at,
+                                                email: user.email,
+                                                _id: user._id
+                                            }, config.secret),
+                                            value: 0,
+                                            id: user._id,
+                                        });
+                                    } else {
+                                        res.status(401).json({
+                                            value: 2,
+                                            message: mesVerify
+                                        })
+                                    }
+                                }
+                                else {
+                                    res.status(401).json({
+                                        value: 2,
+                                        message: mesVerify
+                                    })
+                                }
+                            },
+                            err => {
+                                res.status(401).json({
+                                    value: 2,
+                                    message: mesVerify
+                                })
+                            }
+                        )
+                }
+            },
+            err => {
+                res.status(401).json({
+                    value: 1,
+                    message: mesVerify
+                })
+            });
 
 }
 
