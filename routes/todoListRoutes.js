@@ -57,4 +57,8 @@ module.exports = function(app) {
     app.route('/api/auth/profile/:id')
         .put(userHandles.loginRequired,userHandles.update_profile)
         .get(userHandles.loginRequired,userHandles.profile);
+
+    app.route('/api/auth/profilepicture')
+        .post(userHandles.upload_profile_picture)
+
 };

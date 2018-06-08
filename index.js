@@ -13,6 +13,7 @@ var express = require('express'),
     bodyParser = require('body-parser'),
     path = require('path'),
     jsonwebtoken = require("jsonwebtoken");
+const fileUpload = require('express-fileupload');
 
 const config = require("./config");
 const port = config.AUrl;
@@ -20,6 +21,8 @@ mongoose.Promise = global.Promise;
 mongoose.connect(config.database);
 
 app.use(express.static('public'));
+// default options
+app.use(fileUpload());
 
 
 //app.use(bodyParser.json());
