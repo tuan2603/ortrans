@@ -3,18 +3,18 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const saltRounds = 10;
 const jwt = require('jsonwebtoken');
-const User = mongoose.model('User');
-const Code = mongoose.model('VerifyCode');
-const UserDoc = mongoose.model('UserDocs');
+const User = require('../models/userModel');
+const Code = require('../models/codeModel');
+const UserDoc = require('../models/userDocModel');
 const config = require("../config");
 const passwordValidator = require('password-validator');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
 // Create a schema
-var checkPass = new passwordValidator();
-var nodemailer = require('nodemailer');
-var rp = require('request-promise');
+const checkPass = new passwordValidator();
+const nodemailer = require('nodemailer');
+const rp = require('request-promise');
 
 
 // Add properties to it
@@ -29,8 +29,8 @@ checkPass
 //.is().not().oneOf(['Passw0rd', 'Password123']); // Blacklist these values
 
 // completely pointless, but whatever
-var rn = require('random-number');
-var options = {
+const rn = require('random-number');
+const options = {
     min: 1000,
     max: 9999
     , integer: true
@@ -132,17 +132,21 @@ let findUserPhone = (phone) => {
     });
 }
 
+let findUserId = (id) => {
+    return new Promise((resolve, reject) => {
+        User.findOne({_id: id}, function (err, user) {
+            if (err) reject(err);
+            resolve(user);
+        });
+    });
+}
+
 let SaveCoseVerify = (newCode) => {
     newCode.save(function (err, user) {
         if (err) console.log(err);
     });
 }
 
-let SaveUserDoc = (newCode) => {
-    newCode.save(function (err, user) {
-        if (err) console.log(err);
-    });
-}
 
 let Register = (newUser, res) => {
     newUser.save(function (err, user) {
@@ -154,11 +158,6 @@ let Register = (newUser, res) => {
             });
         } else {
             if (user) {
-                let userDoc = new UserDoc(req.body);
-                userDoc.accountId = user._id;
-                if (user.roleType === 2) {
-                    SaveUserDoc(userDoc);
-                }
                 return SingIN(user, res);
             }
             else {
@@ -182,10 +181,12 @@ let RegisterWeb = (newUser, res, req) => {
 
         } else {
             if (user) {
-                let userDoc = new UserDoc(req.body);
-                userDoc.accountId = user._id;
                 if (user.roleType === 2) {
-                    SaveUserDoc(userDoc);
+                    let newDoc = new UserDoc(req.body);
+                    newDoc.accountID = user._id;
+                    newDoc.save(function (err, docuser) {
+                        if (err) console.log(err);
+                    });
                 }
                 return SingIN(user, res);
             }
@@ -282,11 +283,7 @@ exports.register = function (req, res) {
             .then(
                 user => {
                     if (user) {
-                        return res.json({
-                            value: 5,
-                            "message": Messages
-                        });
-
+                        return SingIN(newUser, res);
                     } else {
                         return RegisterWeb(newUser, res, req);
                     }
@@ -380,18 +377,18 @@ exports.verify = function (req, res) {
             findUserBody(req.body)
                 .then(user => {
                         if (!user) {
-                            res.status(401).json({
+                            return res.json({
                                 message: mesVerify,
                                 value: 1
                             })
                         } else if (user) {
                             if (user.active_type < 1) {
-                                res.status(401).json({
+                                return res.json({
                                     message: mesVerify,
                                     value: 4
                                 })
                             } else if (!comparePassword(req.body.code, user)) {
-                                res.status(401).json({
+                                return res.json({
                                     message: mesVerify,
                                     value: 5
                                 })
@@ -412,7 +409,7 @@ exports.verify = function (req, res) {
                         }
                     },
                     err => {
-                        res.status(401).json({
+                        return res.json({
                             value: 1,
                             message: mesVerify
                         })
@@ -421,7 +418,7 @@ exports.verify = function (req, res) {
             findUserBody(req.body)
                 .then(user => {
                         if (!user) {
-                            res.status(401).json({
+                            return res.json({
                                 value: 1,
                                 message: mesVerify
                             })
@@ -455,21 +452,21 @@ exports.verify = function (req, res) {
                                                     id: user._id,
                                                 });
                                             } else {
-                                                res.status(401).json({
+                                                return res.json({
                                                     value: 2,
                                                     message: mesVerify
                                                 })
                                             }
                                         }
                                         else {
-                                            res.status(401).json({
+                                            return res.json({
                                                 value: 2,
                                                 message: mesVerify
                                             })
                                         }
                                     },
                                     err => {
-                                        res.status(401).json({
+                                        return res.json({
                                             value: 2,
                                             message: mesVerify
                                         })
@@ -478,7 +475,7 @@ exports.verify = function (req, res) {
                         }
                     },
                     err => {
-                        res.status(401).json({
+                        return res.json({
                             value: 1,
                             message: mesVerify
                         })
@@ -486,7 +483,7 @@ exports.verify = function (req, res) {
         }
     }
     else {
-        res.status(401).json({
+        return res.json({
             value: 3,
             message: mesVerify
         })
@@ -529,10 +526,10 @@ exports.verify_web = function (req, res) {
                                                         }, config.secret),
                                                         value: 0,
                                                         id: useOne._id,
-                                                        activeType:useOne.activeType,
+                                                        activeType: useOne.activeType,
                                                     });
                                                 })
-                                        }else{
+                                        } else {
                                             user.password = undefined;
                                             return res.status(200).json({
                                                 message: jwt.sign({
@@ -543,7 +540,7 @@ exports.verify_web = function (req, res) {
                                                 }, config.secret),
                                                 value: 0,
                                                 id: user._id,
-                                                activeType:user.activeType,
+                                                activeType: user.activeType,
                                             });
                                         }
 
@@ -645,18 +642,47 @@ exports.update_active = function (req, res) {
     });
 }
 
+let FindOneUserDoc = (id) => {
+    return new Promise((resolve, reject) => {
+        UserDoc.findOne({accountID: id}, function (err, Profile) {
+            if (err) return reject(err);
+            resolve(Profile);
+        });
+    });
+}
+
 exports.profile = function (req, res) {
     User.findOne({_id: req.params.id}, function (err, User) {
-        if (err)
+        if (err) {
             return res.status(400).send({
                 response: 'get profile fail',
                 value: false
             });
-        User.password = undefined;
-        res.json({
-            value: true,
-            response: User
-        });
+        } else {
+            if (User) {
+                FindOneUserDoc(req.params.id)
+                    .then(Profile => {
+                        console.log(Profile);
+                        User.password = undefined;
+                        res.json({
+                            value: true,
+                            response: Object.assign(JSON.parse(JSON.stringify(User)), JSON.parse(JSON.stringify(Profile)))
+                        });
+                    }, err => {
+                        console.log(err);
+                        User.password = undefined;
+                        res.json({
+                            value: true,
+                            response: User
+                        });
+                    });
+            } else {
+                return res.status(400).send({
+                    response: 'get profile fail',
+                    value: false
+                });
+            }
+        }
     });
 }
 
@@ -710,39 +736,13 @@ exports.update_password = function (req, res) {
     }
 }
 
-//upload file
-let uploadDir = 'public/uploads';
-var Storage = multer.diskStorage({
-    destination: uploadDir,
-    filename: function (req, file, cb) {
-        cb(null, file.fieldname + '-' + Date.now() + ".jpg");
-    }
-
-});
-
-var upload = multer({
-    storage: Storage,
-    fileFilter: function (req, file, callback) {
-        var ext = path.extname(file.originalname).toLowerCase();
-        if (ext !== '.png'
-            && ext !== '.jpg'
-            && ext !== '.jpeg'
-        ) {
-            return callback(new Error('Only images are allowed'))
-        }
-        callback(null, true)
-    },
-    limits: {
-        fileSize: 6000000
-    }
-}).single('avatar'); //Field name and max count
 
 let deleteAvatar = (id) => {
     User.findOne({_id: id}, function (err, user) {
         if (err) console.log(err);
         if (user) {
             try {
-                fs.unlinkSync(uploadDir + "/" + user.avatarLink);
+                fs.unlinkSync(uploadDir + user.phone + "/" + user.avatarLink);
             } catch (err) {
                 console.log(err);
             }
@@ -772,6 +772,59 @@ let DelAndUpdateAvatar = async (id, filename, res) => {
     updateAvatarUser(id, filename, res);
 }
 
+//function will check if a directory exists, and create it if it doesn't
+let checkDirectory = (directory, callback) => {
+    fs.stat(directory, function (err, stats) {
+        //Check if error defined and the error code is "not exists"
+        if (err && err.errno === 34) {
+            //Create the directory, call the callback.
+            fs.mkdir(directory, callback);
+        } else {
+            //just in case there was a different error:
+            callback(err)
+        }
+    });
+}
+
+//upload file
+let uploadDir = 'public/uploads/';
+var Storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        checkDirectory('public/uploads/' + req.user.phone, function (error) {
+            if (error) {
+                try {
+                    fs.statSync('public/uploads/' + req.user.phone);
+                } catch (e) {
+                    fs.mkdirSync('public/uploads/' + req.user.phone);
+                }
+                cb(null, 'public/uploads/' + req.user.phone);
+            } else {
+                cb(null, 'public/uploads/' + req.user.phone);
+            }
+        });
+    },
+    filename: function (req, file, callback) {
+        callback(null, file.fieldname + '-' + Date.now() + ".jpg");
+    }
+});
+
+
+var upload = multer({
+    storage: Storage,
+    fileFilter: function (req, file, callback) {
+        var ext = path.extname(file.originalname).toLowerCase();
+        if (ext !== '.png'
+            && ext !== '.jpg'
+            && ext !== '.jpeg'
+        ) {
+            return callback(new Error('Only images are allowed'))
+        }
+        callback(null, true)
+    },
+    limits: {
+        fileSize: 6000000
+    }
+}).single('avatar'); //Field name and max count
 
 exports.update_avatar = function (req, res) {
     upload(req, res, function (err) {
@@ -784,22 +837,118 @@ exports.update_avatar = function (req, res) {
             //console.log(req.file);
             if (req.file) {
                 if (req.body.id) {
-                    return DelAndUpdateAvatar(req.body.id, req.file.filename, res);
+                    DelAndUpdateAvatar(req.body.id, req.file.filename, res);
                 } else {
-                    try {
-                        fs.unlinkSync(uploadDir + "/" + req.file.filename);
-                    } catch (err) {
-                        console.log(err);
-                    }
-                    res.json({
-                        "response": "not find id",
-                        "value": false
+                    deleteAvatar(req.body.id);
+                    return res.status(401).json({
+                        "response": false,
+                        "value": req.file.filename
                     });
                 }
             } else {
-                res.json({
-                    "response": req.file,
-                    "value": false
+                return res.status(401).json({
+                    "response": false,
+                    "value": "not find id"
+                });
+            }
+        }
+    });
+}
+
+
+let deleteIdentityCardFront = (body) => {
+    UserDoc.findOne({accountID: body.id}, function (err, doc) {
+        if (err) console.log(err);
+        if (doc) {
+            try {
+                switch (body.expression) {
+                    case "identityCardFront":
+                        fs.unlinkSync(uploadDir + body.folder + "/" + doc.identityCardFront);
+                        break;
+
+                    case "identityCardBehind":
+                        fs.unlinkSync(uploadDir + body.folder + "/" + doc.identityCardBehind);
+                        break;
+
+                    default:
+                }
+
+            } catch (err) {
+                console.log(err);
+            }
+        }
+    })
+}
+
+// dung để update thông tin user phụ
+exports.update_userdoc = (req ,res) =>{
+   return updateUserDoc(req.body,res);
+}
+
+let updateUserDoc = (obj, res) => {
+    UserDoc.findOneAndUpdate({accountID: obj.id}, obj , {new: true}, function (err, User) {
+        if (err)
+            return res.status(400).send({
+                response: err,
+                value: false
+            });
+        findUserId(obj.id)
+            .then(Profile => {
+                Profile.password = undefined;
+                return  res.json({
+                    value: true,
+                    response: Object.assign(JSON.parse(JSON.stringify(User)), JSON.parse(JSON.stringify(Profile)))
+                });
+            }, err => {
+                console.log(err);
+                return   res.json({
+                    value: true,
+                    response: User
+                });
+            });
+    });
+
+}
+
+let updateIdentityCardFront = (body, filename, res) => {
+
+    switch (body.expression) {
+        case "identityCardFront":
+             return updateUserDoc({identityCardFront:filename},res);
+        case "identityCardBehind":
+            return updateUserDoc({identityCardBehind:filename},res);
+        default:
+    }
+}
+
+let DelAndUpdateIdentityCardFront = async (body, filename, res) => {
+    await deleteIdentityCardFront(body);
+    updateIdentityCardFront(body, filename, res);
+}
+
+exports.update_identityCardFront = function (req, res) {
+    upload(req, res, function (err) {
+        if (err) {
+            res.json({
+                "response": err,
+                "value": false
+            });
+        } else {
+            //console.log(req.file);
+            if (req.file) {
+                if (req.body.id) {
+                    DelAndUpdateIdentityCardFront(req.body, req.file.filename, res);
+                } else {
+                    deleteIdentityCardFront(req.body);
+                    return res.status(401).json({
+                        "response": false,
+                        "value": req.file.filename
+                    });
+                }
+            } else {
+                return res.status(401).json({
+                    "response": false,
+                    "value": "not find id"
                 });
             }
         }
@@ -839,23 +988,6 @@ exports.sign_in = function (req, res) {
         }
     })
 }
-
-exports.upload_profile_picture =function(req, res) {
-    if (!req.files)
-        return res.status(400).send('No files were uploaded.');
-
-    // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
-    let sampleFile = req.files.file;
-
-    // Use the mv() method to place the file somewhere on your server
-    sampleFile.mv('/public/uploads/filename.jpg', function(err) {
-        if (err)
-            return res.status(500).send(err);
-
-        res.send('File uploaded!');
-    });
-};
-
 
 exports.loginRequired = function (req, res, next) {
     if (req.user) {

@@ -1,13 +1,11 @@
 'use strict';
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
-
-const UserDocSchema = new Schema({
-    accountId:{
-        type:String,
-        required: true,
-        trim:true,
-        lowercase: true,
+const mongoose = require('mongoose');
+const UserDocSchema = new mongoose.Schema({
+    accountID:{
+        type:String
+    },
+    cityDrive:{
+        type:String
     },
     typeDrive:{
         type:Number
@@ -21,19 +19,12 @@ const UserDocSchema = new Schema({
     referralCode:{
         type:String
     },
-    portrait:{
-        type:String,
-        trim:true,
-        lowercase: true,
-    },
     identityCardFront:{
         type:String,
-        trim:true,
         lowercase: true,
     },
     identityCardBehind:{
         type:String,
-        trim:true,
         lowercase: true,
     },
     identityCardNumber:{
@@ -53,5 +44,5 @@ const UserDocSchema = new Schema({
 });
 
 
-module.exports = mongoose.model('UserDocs', UserDocSchema);
+module.exports = mongoose.model('userdocs', UserDocSchema);
 

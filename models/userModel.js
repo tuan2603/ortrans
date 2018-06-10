@@ -3,59 +3,59 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 const UserSchema = new Schema({
-    fullName:{
-        type:String,
-        trim:true,
+    fullName: {
+        type: String,
+        trim: true,
     },
     countryCode: {
         type: Number,
         required: true,
     },
-    phone:{
-        type:Number,
-        unique:true,
+    phone: {
+        type: Number,
+        unique: true,
         required: true,
     },
-    email:{
-        type:String,
+    email: {
+        type: String,
         lowercase: true,
-        default:''
+        default: ''
     },
-    password:{
-        type:String
+    password: {
+        type: String
     },
-    activeType:{
-        type:Number, // 1 user, 2 driver, 0 admin
-        default:0
+    activeType: {
+        type: Number, // 1 user, 2 driver, 0 admin
+        default: 0
     },
-    roleType:{
-        type:Number, // 1 user, 2 driver, 0 admin
-        default:1
+    roleType: {
+        type: Number, // 1 user, 2 driver, 0 admin
+        default: 1
     },
-    verifyType:{
-        type:Number,
-        default:0 // 0: mail, 1 phone, 2 password
+    verifyType: {
+        type: Number,
+        default: 0 // 0: mail, 1 phone, 2 password
     },
-    avatarLink:{
-        type:String,
+    avatarLink: {
+        type: String,
         lowercase: true
     },
-    location:{
-        type:String
+    location: {
+        type: String
     },
-    onlineStatus:{
-        type:Boolean
+    onlineStatus: {
+        type: Boolean
     },
-    offlineTime:{
-        type:Number
+    offlineTime: {
+        type: Number
     },
-    create_at:{
+    create_at: {
         type: Date,
-        default:Date.now
+        default: Date.now
     },
-    updated_at:{
+    updated_at: {
         type: Date,
-        default:Date.now
+        default: Date.now
     }
 });
 

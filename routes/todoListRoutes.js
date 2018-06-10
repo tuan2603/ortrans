@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = function(app) {
+module.exports = function (app) {
     let todoList = require('../controllers/todoListController');
     let userHandles = require('../controllers/userController');
     let captcha = require('../controllers/captchaController');
@@ -28,9 +28,9 @@ module.exports = function(app) {
         .post(referral.create_a_referral);
 
     app.route('/api/tasks/:taskId')
-        .get(userHandles.loginRequired,todoList.read_a_task)
-        .put(userHandles.loginRequired,todoList.update_a_task)
-        .delete(userHandles.loginRequired,todoList.delete_a_task);
+        .get(userHandles.loginRequired, todoList.read_a_task)
+        .put(userHandles.loginRequired, todoList.update_a_task)
+        .delete(userHandles.loginRequired, todoList.delete_a_task);
 
     app.route('/api/auth/register')
         .post(userHandles.register);
@@ -45,20 +45,22 @@ module.exports = function(app) {
         .post(userHandles.verify_web);
 
     app.route('/api/auth/avatar')
-        .post(userHandles.loginRequired,userHandles.update_avatar);
+        .post(userHandles.loginRequired, userHandles.update_avatar);
+
+    app.route('/api/auth/card')
+        .post(userHandles.loginRequired, userHandles.update_identityCardFront);
+    app.route('/api/auth/doccument')
+        .post(userHandles.loginRequired, userHandles.update_userdoc);
 
     app.route('/api/auth/password/:id')
-        .put(userHandles.loginRequired,userHandles.update_password);
+        .put(userHandles.loginRequired, userHandles.update_password);
 
 
     app.route('/api/auth/:email')
         .put(userHandles.update_active);
 
     app.route('/api/auth/profile/:id')
-        .put(userHandles.loginRequired,userHandles.update_profile)
-        .get(userHandles.loginRequired,userHandles.profile);
-
-    app.route('/api/auth/profilepicture')
-        .post(userHandles.upload_profile_picture)
+        .put(userHandles.loginRequired, userHandles.update_profile)
+        .get(userHandles.loginRequired, userHandles.profile);
 
 };
