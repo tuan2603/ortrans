@@ -1,45 +1,80 @@
 'use strict';
 const mongoose = require('mongoose');
 const UserDocSchema = new mongoose.Schema({
-    accountID:{
-        type:String
+    accountID: {
+        type: String
     },
-    cityDrive:{
-        type:String
+    cityDrive: {
+        type: String
     },
-    typeDrive:{
-        type:Number
+    typeDrive: {
+        type: Number
     },
-    address:{
-        type:String
+    address: {
+        type: String
     },
-    referral:{
-        type:String
+    referral: {
+        type: String
     },
-    referralCode:{
-        type:String
+    referralCode: {
+        type: String
     },
-    identityCardFront:{
-        type:String,
+    identityCardFront: {
+        type: String,
         lowercase: true,
     },
-    identityCardBehind:{
-        type:String,
+    identityCardBehind: {
+        type: String,
         lowercase: true,
     },
-    identityCardNumber:{
-        type:Number
+    identityCardNumber: {
+        type: Number
     },
-    identityCardDateIssued:{
+    identityCardDateIssued: {
         type: Date
     },
-    create_at:{
-        type: Date,
-        default:Date.now
+    vehicleImage1: {
+        type: String,
+        lowercase: true,
     },
-    updated_at:{
+    vehicleImage2: {
+        type: String,
+        lowercase: true,
+    },
+    vehicleImage3: {
+        type: String,
+        lowercase: true,
+    },
+    vehicleImage4: {
+        type: String,
+        lowercase: true,
+    },
+    vehicleLogFront: {
+        type: String,
+        lowercase: true,
+    },
+    vehicleLogBehind: {
+        type: String,
+        lowercase: true,
+    },
+    vehicleLogSerialNumber: {
+        type: String,
+        lowercase: true,
+    },
+    vehicleLogRegistrationDate: {
+        type: Date
+    },
+    vehicleLogPlateNumber: {
+        type: String,
+        lowercase: true,
+    },
+    create_at: {
         type: Date,
-        default:Date.now
+        default: Date.now
+    },
+    updated_at: {
+        type: Date,
+        default: Date.now
     }
 });
 

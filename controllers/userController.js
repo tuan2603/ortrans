@@ -869,6 +869,24 @@ let deleteIdentityCardFront = (body) => {
                     case "identityCardBehind":
                         fs.unlinkSync(uploadDir + body.folder + "/" + doc.identityCardBehind);
                         break;
+                    case "vehicleImage1":
+                        fs.unlinkSync(uploadDir + body.folder + "/" + doc.vehicleImage1);
+                        break;
+                    case "vehicleImage2":
+                        fs.unlinkSync(uploadDir + body.folder + "/" + doc.vehicleImage2);
+                        break;
+                    case "vehicleImage3":
+                        fs.unlinkSync(uploadDir + body.folder + "/" + doc.vehicleImage3);
+                        break;
+                    case "vehicleImage4":
+                        fs.unlinkSync(uploadDir + body.folder + "/" + doc.vehicleImage4);
+                        break;
+                    case "vehicleLogFront":
+                        fs.unlinkSync(uploadDir + body.folder + "/" + doc.vehicleLogFront);
+                        break;
+                    case "vehicleLogBehind":
+                        fs.unlinkSync(uploadDir + body.folder + "/" + doc.vehicleLogBehind);
+                        break;
 
                     default:
                 }
@@ -881,31 +899,45 @@ let deleteIdentityCardFront = (body) => {
 }
 
 // dung để update thông tin user phụ
-exports.update_userdoc = (req ,res) =>{
-   return updateUserDoc(req.body,res);
+exports.update_userdoc = (req, res) => {
+    return updateUserDoc(req.body, res);
 }
 
 let updateUserDoc = (obj, res) => {
-    UserDoc.findOneAndUpdate({accountID: obj.id}, obj , {new: true}, function (err, User) {
+    console.log(obj);
+    UserDoc.findOneAndUpdate({accountID: obj.id}, obj, {new: true}, function (err, User) {
         if (err)
             return res.status(400).send({
                 response: err,
                 value: false
             });
-        findUserId(obj.id)
-            .then(Profile => {
-                Profile.password = undefined;
-                return  res.json({
-                    value: true,
-                    response: Object.assign(JSON.parse(JSON.stringify(User)), JSON.parse(JSON.stringify(Profile)))
-                });
-            }, err => {
-                console.log(err);
-                return   res.json({
-                    value: true,
-                    response: User
-                });
+        if (!User) {
+            return res.status(400).send({
+                response: "khong tim thay",
+                value: false
             });
+        } else {
+            findUserId(User.accountID)
+                .then(Profile => {
+                    if (Profile) {
+                        Profile.password = undefined;
+                        return res.json({
+                            value: true,
+                            response: Object.assign(JSON.parse(JSON.stringify(User)), JSON.parse(JSON.stringify(Profile)))
+                        });
+                    } else {
+                        return res.json({
+                            value: true,
+                            response: User
+                        });
+                    }
+                }, err => {
+                    return res.status(400).send({
+                        response: err,
+                        value: false
+                    });
+                });
+        }
     });
 
 }
@@ -914,9 +946,29 @@ let updateIdentityCardFront = (body, filename, res) => {
 
     switch (body.expression) {
         case "identityCardFront":
-             return updateUserDoc({identityCardFront:filename},res);
+            body.identityCardFront = filename;
+            return updateUserDoc(body, res);
         case "identityCardBehind":
-            return updateUserDoc({identityCardBehind:filename},res);
+            body.identityCardBehind = filename;
+            return updateUserDoc(body, res);
+        case "vehicleImage1":
+            body.vehicleImage1 = filename;
+            return updateUserDoc(body, res);
+        case "vehicleImage2":
+            body.vehicleImage2 = filename;
+            return updateUserDoc(body, res);
+        case "vehicleImage3":
+            body.vehicleImage3 = filename;
+            return updateUserDoc(body, res);
+        case "vehicleImage4":
+            body.vehicleImage4 = filename;
+            return updateUserDoc(body, res);
+        case "vehicleLogFront":
+            body.vehicleLogFront = filename;
+            return updateUserDoc(body, res);
+        case "vehicleLogBehind":
+            body.vehicleLogBehind = filename;
+            return updateUserDoc(body, res);
         default:
     }
 }
