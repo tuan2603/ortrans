@@ -926,9 +926,9 @@ let updateUserDoc = (obj, res) => {
                             response: Object.assign(JSON.parse(JSON.stringify(User)), JSON.parse(JSON.stringify(Profile)))
                         });
                     } else {
-                        return res.json({
-                            value: true,
-                            response: User
+                        return res.status(400).send({
+                            response: "khong tim thay",
+                            value: false
                         });
                     }
                 }, err => {
