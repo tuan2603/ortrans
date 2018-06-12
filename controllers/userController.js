@@ -589,18 +589,21 @@ exports.register_old = function (req, res) {
                 });
             } else {
                 if (user) {
-                    let Verification = rn(options);
-                    if (Send_mail(newUser.email, Verification)) {
-                        return res.json({
-                            value: true,
-                            message: Verification
-                        });
-                    } else {
-                        return res.json({
-                            value: false,
-                            "message": "Send mail failed !"
-                        });
-                    }
+                    // let Verification = rn(options);
+                    // if (Send_mail(newUser.email, Verification)) {
+                    //     return res.json({
+                    //         value: true,
+                    //         message: Verification
+                    //     });
+                    // } else {
+                    //     return res.json({
+                    //         value: false,
+                    //         "message": "Send mail failed !"
+                    //     });
+                    // }
+                    return res.json({
+                        value: true
+                    });
 
                 }
                 else {
@@ -609,8 +612,6 @@ exports.register_old = function (req, res) {
                         value: false
                     });
                 }
-                // user.password = undefined;
-                // return res.json(user);
             }
         });
     } else {
@@ -887,7 +888,48 @@ let deleteIdentityCardFront = (body) => {
                     case "vehicleLogBehind":
                         fs.unlinkSync(uploadDir + body.folder + "/" + doc.vehicleLogBehind);
                         break;
-
+                    case "drivingLicenseFront":
+                        fs.unlinkSync(uploadDir + body.folder + "/" + doc.drivingLicenseFront);
+                        break;
+                    case "drivingLicenseBehind":
+                        fs.unlinkSync(uploadDir + body.folder + "/" + doc.drivingLicenseBehind);
+                        break;
+                    case "vehicleInsuranceFront":
+                        fs.unlinkSync(uploadDir + body.folder + "/" + doc.vehicleInsuranceFront);
+                        break;
+                    case "vehicleInsuranceBehind":
+                        fs.unlinkSync(uploadDir + body.folder + "/" + doc.vehicleInsuranceBehind);
+                        break;
+                    case "studentCardClearanceFront":
+                        fs.unlinkSync(uploadDir + body.folder + "/" + doc.studentCardClearanceFront);
+                        break;
+                    case "studentCardClearanceBehind":
+                        fs.unlinkSync(uploadDir + body.folder + "/" + doc.studentCardClearanceBehind);
+                        break;
+                    case "registrationBookClearance1":
+                        fs.unlinkSync(uploadDir + body.folder + "/" + doc.registrationBookClearance1);
+                        break;
+                    case "registrationBookClearance2":
+                        fs.unlinkSync(uploadDir + body.folder + "/" + doc.registrationBookClearance2);
+                        break;
+                    case "registrationBookClearance3":
+                        fs.unlinkSync(uploadDir + body.folder + "/" + doc.registrationBookClearance3);
+                        break;
+                    case "cvClearance1":
+                        fs.unlinkSync(uploadDir + body.folder + "/" + doc.cvClearance1);
+                        break;
+                    case "cvClearance2":
+                        fs.unlinkSync(uploadDir + body.folder + "/" + doc.cvClearance2);
+                        break;
+                    case "cvClearance3":
+                        fs.unlinkSync(uploadDir + body.folder + "/" + doc.cvClearance3);
+                        break;
+                    case "cvClearance4":
+                        fs.unlinkSync(uploadDir + body.folder + "/" + doc.cvClearance4);
+                        break;
+                    case "cvClearance5":
+                        fs.unlinkSync(uploadDir + body.folder + "/" + doc.cvClearance5);
+                        break;
                     default:
                 }
 
@@ -968,6 +1010,48 @@ let updateIdentityCardFront = (body, filename, res) => {
             return updateUserDoc(body, res);
         case "vehicleLogBehind":
             body.vehicleLogBehind = filename;
+            return updateUserDoc(body, res);
+        case "drivingLicenseFront":
+            body.drivingLicenseFront = filename;
+            return updateUserDoc(body, res);
+        case "drivingLicenseBehind":
+            body.drivingLicenseBehind = filename;
+            return updateUserDoc(body, res);
+        case "vehicleInsuranceFront":
+            body.vehicleInsuranceFront = filename;
+            return updateUserDoc(body, res);
+        case "vehicleInsuranceBehind":
+            body.vehicleInsuranceBehind = filename;
+            return updateUserDoc(body, res);
+        case "studentCardClearanceFront":
+            body.studentCardClearanceFront = filename;
+            return updateUserDoc(body, res);
+        case "studentCardClearanceBehind":
+            body.studentCardClearanceBehind = filename;
+            return updateUserDoc(body, res);
+        case "registrationBookClearance1":
+            body.registrationBookClearance1 = filename;
+            return updateUserDoc(body, res);
+        case "registrationBookClearance2":
+            body.registrationBookClearance2 = filename;
+            return updateUserDoc(body, res);
+        case "registrationBookClearance3":
+            body.registrationBookClearance3 = filename;
+            return updateUserDoc(body, res);
+        case "cvClearance1":
+            body.cvClearance1 = filename;
+            return updateUserDoc(body, res);
+        case "cvClearance2":
+            body.cvClearance2 = filename;
+            return updateUserDoc(body, res);
+        case "cvClearance3":
+            body.cvClearance3 = filename;
+            return updateUserDoc(body, res);
+        case "cvClearance4":
+            body.cvClearance4 = filename;
+            return updateUserDoc(body, res);
+        case "cvClearance5":
+            body.cvClearance5 = filename;
             return updateUserDoc(body, res);
         default:
     }

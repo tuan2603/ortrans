@@ -68,6 +68,100 @@ const UserDocSchema = new mongoose.Schema({
         type: String,
         lowercase: true,
     },
+    drivingLicenseFront: {
+        type: String,
+        lowercase: true,
+    },
+    drivingLicenseBehind: {
+        type: String,
+        lowercase: true,
+    },
+    drivingLicenseNumber: {
+        type: String,
+        lowercase: true,
+    },
+    drivingLicenseIssueDate: {
+        type: Date
+    },
+    drivingLicenseClass: {
+        type: String,
+        lowercase: true,
+    },
+    vehicleInsuranceFront: {
+        type: String,
+        lowercase: true,
+    },
+    vehicleInsuranceBehind: {
+        type: String,
+        lowercase: true,
+    },
+    vehicleInsuranceDate: {
+        type: Date
+    },
+    deviceInformationModel: {
+        type: String,
+        lowercase: true,
+    },
+    deviceInformationIMEI: {
+        type: String,
+        lowercase: true,
+    },
+    studentCardClearanceFront: {
+        type: String,
+        lowercase: true,
+    },
+    studentCardClearanceBehind: {
+        type: String,
+        lowercase: true,
+    },
+    registrationBookClearance1: {
+        type: String,
+        lowercase: true,
+    },
+    registrationBookClearance2: {
+        type: String,
+        lowercase: true,
+    },
+    registrationBookClearance3: {
+        type: String,
+        lowercase: true,
+    },
+    cvClearance1: {
+        type: String,
+        lowercase: true,
+    },
+    cvClearance2: {
+        type: String,
+        lowercase: true,
+    },
+    cvClearance3: {
+        type: String,
+        lowercase: true,
+    },
+    cvClearance4: {
+        type: String,
+        lowercase: true,
+    },
+    cvClearance5: {
+        type: String,
+        lowercase: true,
+    },
+    emergencyContactName: {
+        type: String,
+        lowercase: true,
+    },
+    emergencyContactRelationship: {
+        type: String,
+        lowercase: true,
+    },
+    emergencyContactPhone: {
+        type: String,
+        lowercase: true,
+    },
+    emergencyContactAddress: {
+        type: String,
+        lowercase: true,
+    },
     create_at: {
         type: Date,
         default: Date.now
