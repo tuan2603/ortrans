@@ -1,20 +1,20 @@
 'use strict';
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const saltRounds = 10;
-const jwt = require('jsonwebtoken');
-const User = require('../models/userModel');
-const Code = require('../models/codeModel');
-const UserDoc = require('../models/userDocModel');
-const config = require("../config");
-const passwordValidator = require('password-validator');
-const path = require('path');
-const multer = require('multer');
-const fs = require('fs');
+const mongoose = require('mongoose'),
+    bcrypt = require('bcryptjs'),
+    saltRounds = 10,
+    jwt = require('jsonwebtoken'),
+    User = mongoose.model('User'),
+    Code = mongoose.model('VerifyCode'),
+    UserDoc = mongoose.model('userdocs'),
+    config = require("../config"),
+    passwordValidator = require('password-validator'),
+    path = require('path'),
+    multer = require('multer'),
+    fs = require('fs'),
 // Create a schema
-const checkPass = new passwordValidator();
-const nodemailer = require('nodemailer');
-const rp = require('request-promise');
+    checkPass = new passwordValidator(),
+    nodemailer = require('nodemailer'),
+    rp = require('request-promise');
 
 
 // Add properties to it
@@ -141,6 +141,15 @@ let findUserId = (id) => {
     });
 }
 
+let findUserEmail = (email) => {
+    return new Promise((resolve, reject) => {
+        User.findOne({email: email}, function (err, user) {
+            if (err) reject(err);
+            resolve(user);
+        });
+    });
+}
+
 let SaveCoseVerify = (newCode) => {
     newCode.save(function (err, user) {
         if (err) console.log(err);
@@ -149,25 +158,50 @@ let SaveCoseVerify = (newCode) => {
 
 
 let Register = (newUser, res) => {
-    newUser.save(function (err, user) {
-        if (err) {
-            console.log(Messages, err);
-            return res.status(400).send({
-                message: Messages,
-                value: 3
-            });
-        } else {
-            if (user) {
-                return SingIN(user, res);
-            }
-            else {
-                return res.status(400).send({
-                    message: Messages,
-                    value: 2
-                });
-            }
-        }
-    });
+    if (newUser.email !== undefined) {
+        findUserEmail(newUser.email)
+            .then(
+                useremail=>{
+                    if (!useremail) {
+                        newUser.save(function (err, user) {
+                            if (err) {
+                                console.log(Messages, err);
+                                return res.send({
+                                    message: Messages,
+                                    value: 3
+                                });
+                            } else {
+                                if (user) {
+                                    return SingIN(user, res);
+                                }
+                                else {
+                                    return res.send({
+                                        message: Messages,
+                                        value: 2
+                                    });
+                                }
+                            }
+                        });
+                    }else{
+                        return res.send({
+                            message: Messages,
+                            value: 9
+                        });
+                    }
+                },
+                err => {
+                    return res.send({
+                        message: Messages,
+                        value: 9
+                    });
+                }
+            )
+    } else {
+        return res.send({
+            message: Messages,
+            value: 9
+        });
+    }
 }
 
 let RegisterWeb = (newUser, res, req) => {
@@ -225,21 +259,26 @@ let SingIN = (user, res) => {
     } else if (user.verifyType === 1) {
         //verify code sen message
         SaveCoseVerify(newCode);
-        SendMessageVN(user.phoneb, Verification)
-            .then((repos) => {
-                return res.json({
-                    value: 7,
-                    message: Messages,
-                    code: Verification
-                });
-            })
-            .catch(function (err) {
-                return res.json({
-                    value: 1,
-                    "message": Messages
-                });
-            });
-
+        //gửi tin nhắn
+        // SendMessageVN(user.phoneb, Verification)
+        //     .then((repos) => {
+        //         return res.json({
+        //             value: 7,
+        //             message: Messages,
+        //             code: Verification
+        //         });
+        //     })
+        //     .catch(function (err) {
+        //         return res.json({
+        //             value: 1,
+        //             "message": Messages
+        //         });
+        //     });
+        return res.json({
+            value: 7,
+            message: Messages,
+            code: Verification
+        });
         // SendMessage("+"+user.countryCode + user.phone, Verification)
         //     .then(
         //         responseData => {
@@ -273,6 +312,7 @@ let Messages = {
     6: "Check mail code verify",
     7: "Check message code verify",
     8: "Type password to sign in",
+    9: "Email exists",
 };
 
 exports.register = function (req, res) {
@@ -353,8 +393,6 @@ let mesVerify = {
     4: 'Authentication failed. User not active.',
     5: 'Authentication failed. password not right.',
 };
-
-
 let findCode = (id) => {
     return new Promise((resolve, reject) => {
         Code.find({
@@ -576,46 +614,100 @@ exports.verify_web = function (req, res) {
 
 }
 
+//function dung để đăng ký bằng web
+//dùng để đăng nhập bằng mật khẩu
+//roleType: 2, // 1 user, 2 driver, 0 admin
+//verifyType: 2, // 0: mail, 1 phone, 2 password
+//kiểm tra nếu email và phone tồn tại sẽ không cho đăng ký
 
 exports.register_old = function (req, res) {
     if (checkPass.validate(req.body.password)) {
-        let newUser = new User(req.body);
-        newUser.password = bcrypt.hashSync(req.body.password, saltRounds);
-        newUser.save(function (err, user) {
-            if (err) {
-                return res.status(400).send({
-                    message: err,
-                    value: false
-                });
-            } else {
-                if (user) {
-                    // let Verification = rn(options);
-                    // if (Send_mail(newUser.email, Verification)) {
-                    //     return res.json({
-                    //         value: true,
-                    //         message: Verification
-                    //     });
-                    // } else {
-                    //     return res.json({
-                    //         value: false,
-                    //         "message": "Send mail failed !"
-                    //     });
-                    // }
-                    return res.json({
-                        value: true
-                    });
+        findUserEmail(req.body.email)
+            .then(
+                usermail => {
+                    if (!usermail) {
+                        findUserPhone(req.body.phone)
+                            .then(
+                                userphone => {
+                                    if (!userphone) {
+                                        let newUser = new User(req.body);
+                                        newUser.verifyType = 2;
+                                        newUser.roleType = 2;
+                                        newUser.password = bcrypt.hashSync(req.body.password, saltRounds);
+                                        newUser.save(function (err, user) {
+                                            if (err) {
+                                                console.log(err);
+                                                return res.send({
+                                                    message: 'Lối đăng ký',
+                                                    value: 4
+                                                });
+                                            } else {
+                                                if (user) {
+                                                    // let Verification = rn(options);
+                                                    // if (Send_mail(newUser.email, Verification)) {
+                                                    //     return res.json({
+                                                    //         value: true,
+                                                    //         message: Verification
+                                                    //     });
+                                                    // } else {
+                                                    //     return res.json({
+                                                    //         value: false,
+                                                    //         "message": "Send mail failed !"
+                                                    //     });
+                                                    // }
+                                                    //đăng ks thêm thông tin phụ
+                                                    if (user.roleType === 2) {
+                                                        let newDoc = new UserDoc(req.body);
+                                                        newDoc.accountID = user._id;
+                                                        newDoc.save(function (err, docuser) {
+                                                            if (err) console.log(err);
+                                                        });
+                                                    }
+                                                    return res.send({
+                                                        message: 'Đăng ký thành công',
+                                                        value: 0
+                                                    });
 
-                }
-                else {
-                    return res.status(400).send({
-                        message: 'Register fail',
-                        value: false
+                                                }
+                                                else {
+                                                    return res.send({
+                                                        message: 'Lối đăng ký',
+                                                        value: 4
+                                                    });
+                                                }
+                                            }
+                                        });
+                                    } else {
+                                        return res.send({
+                                            message: 'Số điện thoại đã tồn tại',
+                                            value: 3
+                                        });
+                                    }
+                                },
+                                err => {
+                                    return res.send({
+                                        message: 'Số điện thoại đã tồn tại',
+                                        value: 3
+                                    });
+                                }
+                            );
+                    } else {
+                        return res.send({
+                            message: 'Email đã tồn tại',
+                            value: 2
+                        });
+                    }
+                },
+                err => {
+                    return res.send({
+                        message: 'Email đã tồn tại',
+                        value: 2
                     });
                 }
-            }
-        });
+            );
     } else {
-        return res.status(400).send({
+        return res.send({
+            value: 1,
             message: 'Minimum length 8, ' +
             'Maximum length 100, ' +
             'Must have uppercase letters, ' +
@@ -623,7 +715,6 @@ exports.register_old = function (req, res) {
             'Must have digits, ' +
             'Must have symbols, ' +
             'Should not have spaces'
-
         });
     }
 }
@@ -1094,21 +1185,23 @@ exports.update_identityCardFront = function (req, res) {
 
 exports.sign_in = function (req, res) {
     User.findOne({
-        email: req.body.email,
+        $or: [{
+            phone: req.body.phone
+        }, {
+            email: req.body.email
+        }]
     }, function (err, user) {
         if (err) throw err;
         if (!user) {
-            res.status(401).json({
-                message: 'Authentication failed. User not found.'
+            return res.json({
+                message: 'Tài khoản không tồn tại',
+                value: 1,
             })
-        } else if (user) {
-            if (user.active_type < 1) {
-                res.status(401).json({
-                    message: 'Authentication failed. User not active.'
-                })
-            } else if (!comparePassword(req.body.password, user)) {
-                res.status(401).json({
-                    message: 'Authentication failed. Wrong password.'
+        } else if (user.password !== undefined) {
+            if (!comparePassword(req.body.password, user)) {
+                return res.json({
+                    message: 'Mật khẩu đúng.',
+                    value: 2,
                 })
             } else {
                 return res.json({
@@ -1118,9 +1211,15 @@ exports.sign_in = function (req, res) {
                             email: user.email,
                             _id: user._id
                         },
-                        config.secret)
+                        config.secret),
+                    value: 1,
                 });
             }
+        } else {
+            return res.json({
+                message: 'Tài khoản mật khẩu không tồn tại',
+                value: 3,
+            })
         }
     })
 }

@@ -9,17 +9,13 @@ const UserSchema = new Schema({
     },
     countryCode: {
         type: Number,
-        required: true,
     },
     phone: {
         type: Number,
-        unique: true,
-        required: true,
     },
     email: {
         type: String,
         lowercase: true,
-        default: ''
     },
     password: {
         type: String
