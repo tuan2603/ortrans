@@ -534,7 +534,7 @@ exports.verify_web = function (req, res) {
     findUserPhone(req.body.phone)
         .then(user => {
                 if (!user) {
-                    res.status(401).json({
+                   return res.status(401).json({
                         value: 1,
                         message: mesVerify
                     })
@@ -631,7 +631,7 @@ exports.register_old = function (req, res) {
                                 userphone => {
                                     if (!userphone) {
                                         let newUser = new User(req.body);
-                                        newUser.verifyType = 2;
+                                        newUser.verifyType = 1;
                                         newUser.roleType = 2;
                                         newUser.password = bcrypt.hashSync(req.body.password, saltRounds);
                                         newUser.save(function (err, user) {
@@ -643,18 +643,28 @@ exports.register_old = function (req, res) {
                                                 });
                                             } else {
                                                 if (user) {
-                                                    // let Verification = rn(options);
-                                                    // if (Send_mail(newUser.email, Verification)) {
-                                                    //     return res.json({
-                                                    //         value: true,
-                                                    //         message: Verification
+                                                    let Verification = rn(options);
+                                                    let newCode = new Code({
+                                                        accountId: user._id,
+                                                        phone: user.phone,
+                                                        code: Verification,
+                                                    });
+                                                    SaveCoseVerify(newCode);
+                                                    //gửi tin nhắn
+                                                    // SendMessageVN(user.phoneb, Verification)
+                                                    //     .then((repos) => {
+                                                    //         return res.json({
+                                                    //             value: 7,
+                                                    //             message: Messages,
+                                                    //             code: Verification
+                                                    //         });
+                                                    //     })
+                                                    //     .catch(function (err) {
+                                                    //         return res.json({
+                                                    //             value: 1,
+                                                    //             "message": Messages
+                                                    //         });
                                                     //     });
-                                                    // } else {
-                                                    //     return res.json({
-                                                    //         value: false,
-                                                    //         "message": "Send mail failed !"
-                                                    //     });
-                                                    // }
                                                     //đăng ks thêm thông tin phụ
                                                     if (user.roleType === 2) {
                                                         let newDoc = new UserDoc(req.body);
@@ -665,14 +675,15 @@ exports.register_old = function (req, res) {
                                                     }
                                                     return res.send({
                                                         message: 'Đăng ký thành công',
-                                                        value: 0
+                                                        value: 0,
+                                                        code:Verification
                                                     });
 
                                                 }
                                                 else {
                                                     return res.send({
                                                         message: 'Lối đăng ký',
-                                                        value: 4
+                                                        value: 4,
                                                     });
                                                 }
                                             }
@@ -1191,34 +1202,45 @@ exports.sign_in = function (req, res) {
             email: req.body.email
         }]
     }, function (err, user) {
-        if (err) throw err;
+        if (err) {
+            return res.json({
+                message: 'Lỗi tìm user',
+                value: 5,
+            })
+        }else
         if (!user) {
             return res.json({
                 message: 'Tài khoản không tồn tại',
+                value: 2,
+            })
+        } else if (user.activeType !== 2) {
+            return res.json({
+                message: 'Tài khoản chưa được xác thực',
                 value: 1,
             })
         } else if (user.password !== undefined) {
             if (!comparePassword(req.body.password, user)) {
                 return res.json({
                     message: 'Mật khẩu đúng.',
-                    value: 2,
+                    value: 3,
                 })
             } else {
                 return res.json({
-                    token: jwt.sign({
-                            phone: user.phone,
-                            create_at: user.create_at,
-                            email: user.email,
-                            _id: user._id
-                        },
-                        config.secret),
-                    value: 1,
+                    message: jwt.sign({
+                        phone: user.phone,
+                        create_at: user.create_at,
+                        email: user.email,
+                        _id: user._id
+                    }, config.secret),
+                    value: 0,
+                    id: user._id,
+                    activeType: user.activeType,
                 });
             }
         } else {
             return res.json({
                 message: 'Tài khoản mật khẩu không tồn tại',
-                value: 3,
+                value: 4,
             })
         }
     })

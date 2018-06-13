@@ -21,7 +21,7 @@ const UserSchema = new Schema({
         type: String
     },
     activeType: {
-        type: Number, // 1 user, 2 driver, 0 admin
+        type: Number, // 1 user, 2 driver, 3 admin
         default: 0
     },
     roleType: {
