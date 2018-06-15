@@ -7,6 +7,7 @@ module.exports = function (app) {
     let typeDrive = require('../controllers/typeDriveController');
     let referral = require('../controllers/referralController');
     let codeVerify = require('../controllers/codeController');
+    let shipping = require('../controllers/shippingController');
 
     // todoList Routes
     app.route('/api/tasks')
@@ -68,5 +69,15 @@ module.exports = function (app) {
     app.route('/api/auth/profile/:id')
         .put(userHandles.loginRequired, userHandles.update_profile)
         .get(userHandles.loginRequired, userHandles.profile);
+
+    app.route('/api/shipping/image')
+        .post(userHandles.loginRequired,shipping.insert_image);
+    app.route('/api/shipping/doc')
+        .post(userHandles.loginRequired,shipping.insert_doc);
+    app.route('/api/shipping/list')
+        .post(userHandles.loginRequired,shipping.get_list);
+    app.route('/api/shipping/one')
+        .post(userHandles.loginRequired,shipping.get_one);
+
 
 };

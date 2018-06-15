@@ -15,11 +15,11 @@ const TypeDriveSchema = new Schema({
         lowercase: true,
     },
     create_at:{
-        type: Date,
+        type: Number,
         default:Date.now
     },
     updated_at:{
-        type: Date,
+        type: Number,
         default:Date.now
     }
 });

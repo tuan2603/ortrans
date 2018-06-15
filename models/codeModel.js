@@ -20,7 +20,7 @@ const CodeSchema = new Schema({
         lowercase: true,
     },
     create_at:{
-        type: Date,
+        type: Number,
         default:Date.now
     }
 });

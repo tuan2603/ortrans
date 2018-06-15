@@ -10,11 +10,11 @@ var TaskSchema = new Schema({
         Required: 'Kindly enter the name of the task'
     },
     created_date: {
-        type: Date,
+        type: Number,
         default: Date.now
     },
     status: {
-        type: String,
+        type: Number,
         default: 'pending'
     }
 });
